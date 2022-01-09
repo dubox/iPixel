@@ -91,13 +91,13 @@ app.ui = new Vue({
             utools.copyImage(this.pixel.dataUrl());
        },
        save(){
-            let arr = this.settings.imgPath.split('/');
+            let arr = this.settings.imgPath.split(app.path.sep);
             let file_name = arr[arr.length-1];
             file_name = file_name.split('.');
             delete file_name[file_name.length-1];
             file_name = file_name.join('_') + '.' + Math.ceil( Math.random()*1000);
             file_name = file_name.replace(/ /g,'_');
-            var file_path = utools.getPath('downloads')+'/'+file_name+'.png';
+            var file_path = utools.getPath('downloads') + app.path.sep + file_name+'.png';
             this.pixel.blob((b)=>{
                 app.writeFileSync(file_path,new DataView(b));
                 utools.shellShowItemInFolder(file_path);

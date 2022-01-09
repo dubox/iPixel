@@ -1,4 +1,5 @@
 const {writeFile,writeFileSync} =  require('fs');
+const path = require('path');
 
 utools.onPluginEnter(({
     code,
@@ -29,4 +30,5 @@ utools.onPluginReady(() => {
 window.app = window.app || {
     writeFile : writeFile,
     writeFileSync : writeFileSync,
+    path : path,
 };
