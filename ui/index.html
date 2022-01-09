@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>jFlower</title>
+    <script type="text/javascript" src="iview/vue.min.js"></script>
+    <link rel="stylesheet" href="iview/iview.css">
+    <script type="text/javascript" src="iview/iview.min.js"></script>
+    
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+            background-image: url(./img/logo.png) no-repeat center;
+            background-color: #cecece;
+            overflow: auto !important;
+        }
+
+        .ivu-input{background: none;}
+
+        .ivu-layout {
+            background: none;
+        }
+
+
+        #pull-drawer {
+            width: 20px;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            right: 0;
+            display: flex;
+            align-items:center;
+            font-size: 20px;
+            opacity: .6;
+        }
+
+        #pull-drawer:hover {
+            opacity: 1;
+        }
+
+        .ivu-drawer-content{background: none;}
+        .col {
+            flex-shrink: 0;
+            flex-grow: 1;
+        }
+
+        #cvs_con{display:flex;align-items:center;justify-content: center;position: relative;}
+        #canvas,#mask{padding: 0;margin: auto;position: absolute;left: 0;top: 0;transform-origin: 0 0;}
+
+        #mask{animation: blink 2.5s both infinite;}
+        @keyframes blink {
+            0% {opacity: 1;}
+            30%,80% {opacity: 0;}
+            100% {opacity: 1;}
+        }
+
+        .vc-twitter-triangle-shadow,.vc-twitter-triangle{display: none;}
+        
+       
+    </style>
+</head>
+
+<body>
+    <style>
+        .vc-twitter-body{padding: 0;}
+    </style>
+    <div id="ui" v-cloak>
+        <Layout class="layout" style="position: fixed;left: 0;top: 0;width: 100%; opacity: 0.5;">
+            <Row type="flex" align="middle">
+
+                <i-col span="8" class="col" align="middle">
+                    <Card :bordered="false" style="width:520px;margin: 50px auto;background: none;">
+                        <div style="text-align:center">
+                            <img src="img/logo.png" width="60%">
+                            <h2 style="color: #ffffff;">iPixel</h2>
+                        </div>
+                    </Card>
+                </i-col>
+
+            </Row>
+        </Layout>
+
+        <Layout class="layout" :style="{minWidth: (cvsWidth+500)+'px'}">
+            <Row type="flex" align="left">
+                <i-col span="4" class="col"></i-col>
+                <i-col span="16" class="col" align="middle" style="padding:20px;">
+                        <div id="cvs_con" :style="{width: cvsWidth+'px',height:cvsHeight+'px'}">
+                            <canvas id="canvas" :style="{transform: 'scale('+runtime.scale+')'}" ></canvas>
+                            <canvas id="mask" :style="{transform: 'scale('+runtime.scale+')'}" ></canvas>
+                        </div>
+                        
+                </i-col>
+                <i-col span="4" class="col"></i-col>
+            </Row>
+            
+        </Layout>
+        <Drawer placement="left" :mask="false" :closable="true" v-model="colorPickerShow" @on-close="colorPanelClose" :width='248' :style="{textShadow:'0px 0px 3px #FFF'}">
+            <Row>
+                <Divider :class="'ld'" orientation="left">颜色编辑</Divider>
+                <i-col span="24" align="right">
+                    <!-- 仅色相<i-switch size="small"  v-model="runtime.HOnly" /> -->
+                    <Checkbox v-model="runtime.HOnly" >仅色相</Checkbox>
+                </i-col>
+            </Row>
+            <Row style="margin-top: 5px;">
+                
+                <i-col span="24">
+                    <twitter-picker v-model="pickedColor" :default-colors="defaultColors" :width="'auto'" :triangle="'none'"
+                    :style="{background: 'none',boxShadow:'none'}" />
+                    
+                </i-col>
+            </Row>
+            <Row>
+                <Divider :class="'ld'" orientation="left">说明</Divider>
+                <i-col span="24" align="left">
+                    <p>
+                        1.点击图像上的像素块，可以选中该像素块并可对其进行颜色操作；
+                    </p>
+                    <p>
+                        2.再次点击该像素块，可以选中相连的相同颜色的色块；
+                    </p>
+                    <p>
+                        3.第三次点击该像素块，可以选中所有相同颜色的色块；
+                    </p>
+                    <p>
+                        4.第四次点击该像素块，可取消选中；
+                    </p>
+                </i-col>
+            </Row>
+            
+        </Drawer>
+
+        <a href="#" v-show="!drawer" id="pull-drawer" @click.prevent="drawer=true">
+            <Icon type="md-arrow-dropleft"  size="30"/>
+        </a>
+        <Drawer placement="right" :mask="false" :closable="true" v-model="drawer" :style="{opacity:0.7,textShadow:'0px 0px 3px #FFF'}">
+            <Row>
+                <i-col span="24">
+                    <i-button type="info" ghost size="small" @click="selectImg()">选择图片</i-button>
+                </i-col>
+            </Row>
+            
+            <Row>
+                <Divider :class="'ld'" orientation="left">缩放</Divider>
+                <i-col span="24">
+                    <Slider v-model="settings.scale" :tip-format="v=>'1/'+v" :min="1" :max="8" :step="1"></Slider>
+                </i-col>
+            </Row>
+
+            <Row v-for="(item ,index) in settings.actions.sort">
+                <Divider :class="'ld'" orientation="left">{{item.name}}</Divider>
+                <i-col span="24">
+                    <Slider v-if="item.key=='group'" v-model="settings.actions.group" :min="2" :max="16" :step="1"></Slider>
+                    <Slider v-if="item.key=='rgbMerge'" v-model="settings.actions.rgbMerge" :min="0" :max="30" :step="5"></Slider>
+                    <Slider v-if="item.key=='hsvLevel'" v-model="settings.actions.hsvLevel" :min="0" :max="30" :step="5"></Slider>
+                    <span v-if="item.key=='hsvMerge'">
+                        <Slider v-model="settings.actions.hsvMerge[0]" :min="0.00" :max="0.6" :step="0.02"></Slider>
+                        <!-- <Slider v-model="settings.actions.hsvMerge[2]" :min="settings.actions.hsvLevel" :max="50+(50%settings.actions.hsvLevel)" :step="settings.actions.hsvLevel"></Slider> -->
+                    </span>
+                </i-col>
+                
+            </Row>
+            <Row>
+                <i-col span="10"  align="middle">
+                    <i-button type="info" ghost size="small" :loading="this.pixel?this.pixel.processing:false" @click="process()">生成
+                    </i-button>
+                </i-col>
+                <i-col span="7"  align="middle">
+                    <i-button type="info" ghost size="small" @click="copy()">复制</i-button>
+                </i-col>
+                <i-col span="7"  align="middle">
+                    <i-button type="info" ghost size="small" @click="save()">保存</i-button>
+                </i-col>
+            </Row>
+        </Drawer>
+        
+    </div>
+
+</body>
+
+<script type="text/javascript" src="./hotkeys.min.js"></script>
+<script type="text/javascript" src="../pixel.js"></script>
+<script type="text/javascript" src="./vue-color.min.js"></script>
+<script type="text/javascript" src="./index.js"></script>
+<script>
+
+</script>
+</html>
