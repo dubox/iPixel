@@ -86,16 +86,16 @@
         </Layout>
 
         <Layout class="layout" :style="{minWidth: (cvsWidth+500)+'px'}">
-            <Row type="flex" align="left">
-                <i-col span="4" class="col"></i-col>
-                <i-col span="16" class="col" align="middle" style="padding:20px;">
+            <Row type="flex" align="middle">
+                <!-- <i-col span="4" class="col"></i-col> -->
+                <i-col span="24" class="col" align="middle" style="padding:20px;">
                         <div id="cvs_con" :style="{width: cvsWidth+'px',height:cvsHeight+'px'}">
                             <canvas id="canvas" :style="{transform: 'scale('+runtime.scale+')'}" ></canvas>
                             <canvas id="mask" :style="{transform: 'scale('+runtime.scale+')'}" ></canvas>
                         </div>
                         
                 </i-col>
-                <i-col span="4" class="col"></i-col>
+                <!-- <i-col span="4" class="col"></i-col> -->
             </Row>
             
         </Layout>
@@ -138,7 +138,7 @@
         <a href="#" v-show="!drawer" id="pull-drawer" @click.prevent="drawer=true">
             <Icon type="md-arrow-dropleft"  size="30"/>
         </a>
-        <Drawer placement="right" :mask="false" :closable="true" v-model="drawer" :style="{opacity:0.7,textShadow:'0px 0px 3px #FFF'}">
+        <Drawer placement="right" :mask="false" :closable="true" v-model="drawer" :width='248' :style="{opacity:0.7,textShadow:'0px 0px 3px #FFF'}">
             <Row>
                 <i-col span="24">
                     <i-button type="info" ghost size="small" @click="selectImg()">选择图片</i-button>

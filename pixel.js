@@ -73,10 +73,27 @@ Pixel.prototype.exec = function(options){
         this.imgData = ctx.getImageData(0,0, cvs.width,cvs.height);
             //this.imgOriginData = this.imgData.data;
             console.log((new Date()).getTime());
-        for(let i in options.actions.sort){
-            let item = options.actions.sort[i];
-            this[item.key](options.actions[item.key]);
-        }
+            this.groupSize = options.actions['group'];
+            var row_size = Math.ceil( this.imgData.width/this.groupSize);
+            var col_size = Math.ceil( this.imgData.height/this.groupSize);
+            var act = [];
+            for(let i in options.actions.sort){
+                let item = options.actions.sort[i];
+                
+                     //act .push( this[item.key](options.actions[item.key]) );
+                     var act = this[item.key](options.actions[item.key]) ;
+                     for(let i=0; i< row_size*col_size;i++){
+                    
+                        // act.forEach((v)=>{
+                        //     v(this.getGroup(i) ,i);
+                        // });
+    
+                        act(this.getGroup(i) ,i);
+                    }
+            }
+                
+            
+        
         console.log((new Date()).getTime());
     
         this.draw();
@@ -140,8 +157,8 @@ Pixel.actions = {
 
     group(d){
         this.groupSize = d;
-        for(let i=0;i<this.imgData.data.length/(d*d*4);i++){
-            var g = this.getGroup(i);
+        return (g ,index)=>{
+            //var g = this.getGroup(i);
             var avg = [0,0,0];
             g.forEach((v)=>{
                 let p = this.getPixel(v);//g[Math.ceil(g.length/2)]
@@ -150,18 +167,16 @@ Pixel.actions = {
                 avg[2]+=p[2];
             });
             avg = avg.map((v)=>{return Math.floor(v/g.length)});
-            g.forEach((v)=>{
-                let p = this.setPixel(v,avg);
-            });
+            this.setGroup(index,avg);
         }
     },
 
     rgbMerge(threshold){
 
         var temp = [];
-        check:for (var i=0;i<this.imgData.data.length/4;i++)
+        return (g,index)=>
         {
-            var arr1 = this.getPixel(i);
+            var arr1 = this.getPixel(g[0]);
             
             if(!temp.length)temp.push(arr1);
             for(let j=0;j<temp.length;j++){
@@ -171,41 +186,37 @@ Pixel.actions = {
                 if(
                     Math.sqrt(r*r+g*g+b*b)<threshold
                 ){
-                    this.setPixel(i ,temp[j]);
-                    continue check;
+                    this.setGroup(index ,temp[j]);
+                    return;
                 }
                 
             }
             temp.push(arr1);
         }
         
-
     },
 
     hsvLevel(level){
         //var level = 10;
-        for (var i=0;i<this.imgData.data.length/4;i++)
+        return (g ,index)=>
         {
-            var arr = this.getPixel(i);
+            var arr = this.getPixel(g[0]);
             var arr1 = this.RGBtoHSV(arr);
-        
             
             //arr1[0] = Math.floor( arr1[0]*360/level)*(level/360)+(level/360/2);
             //arr1[1] = Math.floor( arr1[1]*100/level)*(level/100)+(level/100/2);
             arr1[2] = Math.floor( arr1[2]*100/level)*(level/100)+(level/100/2);
             
-            this.setPixel(i ,this.HSVtoRGB(arr1));
+            this.setGroup(index ,this.HSVtoRGB(arr1));
             
         }
     },
 
-    hsvMerge(threshold){
-        var temp = hsv_arr = [];
-        //var threshold = [h,s,v];
-        threshold[2] = threshold[2]>1?threshold[2]/100:threshold[2];
-        check:for (var i=0;i<this.imgData.data.length/4;i++)
-        {
-            var arr1 = this.getPixel(i);
+    hsvMerge(threshold ){
+        var temp = [];
+        
+        return (g ,index)=>{
+            var arr1 = this.getPixel(g[0]);
             var arr2 = this.RGBtoHSV(arr1);
             
             //if(!temp.length)temp.push(arr1);
@@ -217,8 +228,8 @@ Pixel.actions = {
                     // && Math.abs(arr1[1]-temp[j][1]) <= threshold[1]
                     && Math.abs(arr2[2]-temp2[2]) < 0.05//threshold[2]
                 ){
-                    this.setPixel(i ,temp[j]);
-                    continue check;
+                    this.setGroup(index ,temp[j]);
+                    return;
                 }
             }
             temp.push(arr1);

@@ -95,7 +95,7 @@ app.ui = new Vue({
             let file_name = arr[arr.length-1];
             file_name = file_name.split('.');
             delete file_name[file_name.length-1];
-            file_name = file_name.join('_') + '.' + Math.ceil( Math.random()*1000);
+            file_name = (file_name.join('_') || 'ipixel') + '.' + Math.ceil( Math.random()*1000);
             file_name = file_name.replace(/ /g,'_');
             var file_path = utools.getPath('downloads') + app.path.sep + file_name+'.png';
             this.pixel.blob((b)=>{
@@ -118,30 +118,26 @@ app.ui = new Vue({
     mounted() {
 
         //加减号缩放
-        hotkeys('=', { splitKey: '-' }, (e)=>{
-            if(this.runtime.scale >= 3)  return;
-            this.runtime.scale += 0.1;
+        hotkeys('=,-',{ splitKey: '|' },  (e, handler)=>{
+            var scale = this.runtime.scale;
+            if(handler.key == '=') scale += 0.1; else scale -= 0.1;
+            if(scale < 0.3 || scale > 3)  return;
+            this.runtime.scale = parseFloat( scale.toFixed(1));
           });
-          hotkeys('-', (e)=>{
-            if(this.runtime.scale <= 0.5){this.runtime.scale = 0.5;  return;}
-            this.runtime.scale -= 0.1;
-          });
+        
 
           //鼠标滚轮缩放
-        window.addEventListener('mousewheel',  (e) =>{//console.log(e)
+        window.addEventListener('mousewheel',  (e) =>{
             if (!e.ctrlKey) return;
             e.preventDefault();
-            if (e.deltaY < 0) {
-                if(this.runtime.scale <= 0.5)  return;
-                this.runtime.scale -= 0.01;
-            } else {
-                if(this.runtime.scale >= 3)  return;
-                this.runtime.scale += 0.01;
-            }
-            
+            var scale = this.runtime.scale;
+            if (e.deltaY < 0) scale -= 0.01; else scale += 0.01;
+            if(scale < 0.3 || scale > 3)  return;
+            this.runtime.scale = parseFloat( scale.toFixed(2));
         },{ passive: false });
+
+
         //this.pixel = new Pixel("./img/eg.jpg" ,this.settings); //
-        
         this.pixel = new Pixel(this.settings); //
         this.pixel.onSelect = ()=>{
             this.colorPickerShow = !!this.pixel.runtime.selected.level;
@@ -156,6 +152,11 @@ app.ui = new Vue({
         },
         'settings.imgPath':function(){
             this.changeImg();
+        },
+        'runtime.scale':function(newVal){
+            console.log(newVal);
+            this.$Message.destroy();
+            this.$Message.info((newVal * 100).toFixed(0) +'%');
         }
     }
 });
