@@ -198,15 +198,28 @@ Pixel.actions = {
 
     hsvLevel(level){
         //var level = 10;
+        var levelArr = [];
+        for(let i=0; i<=level;i++){ //取得从0到1 level个等分的等分点
+            levelArr.push(1/level * i);
+        }
         return (g ,index)=>
         {
+            if(!level)return;
             var arr = this.getPixel(g[0]);
             var arr1 = this.RGBtoHSV(arr);
             
             //arr1[0] = Math.floor( arr1[0]*360/level)*(level/360)+(level/360/2);
             //arr1[1] = Math.floor( arr1[1]*100/level)*(level/100)+(level/100/2);
-            arr1[2] = Math.floor( arr1[2]*100/level)*(level/100)+(level/100/2);
-            
+            //arr1[2] = Math.floor( arr1[2]*100/level)*(level/100)+(level/100/2);
+            var tmp = 2,v2 = 0;
+            levelArr.forEach((v,i)=>{   //找到当前明度最近的等分点
+                let s = Math.abs( arr1[2]-v);
+                if( s < tmp ){
+                    v2 = v;
+                    tmp = s;
+                }
+            });
+            arr1[2] = v2;
             this.setGroup(index ,this.HSVtoRGB(arr1));
             
         }

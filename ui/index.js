@@ -10,7 +10,7 @@ app.ui = new Vue({
             actions:{
                 group:4,
                 rgbMerge:10,
-                hsvLevel:20,
+                hsvLevel:3,
                 hsvMerge:[0.08,0.0,0.08],
                 sort:[
                     {
@@ -42,7 +42,7 @@ app.ui = new Vue({
         pixel : null,
         processing:false,
         defaultColors:['#123','#abc','#765','#789','#a1b2c3'],
-        pickedColor:{ r: 0, g: 0, b: 0 },
+        pickedColor:{rgba:{ r: 0, g: 0, b: 0 }},
         colorPickerShow:false,
     },
     components: {
@@ -78,10 +78,18 @@ app.ui = new Vue({
             this.pixel.setImg(this.settings.imgPath);
             this.pixel.afterExec = ()=>{
                 var colors = this.pixel.getColors();
+                this.pickedColor = {    //默认选中第一个颜色
+                    rgba:{
+                        r:colors[0][0],
+                        g:colors[0][1],
+                        b:colors[0][2],
+                    }
+                };
                 for(let i in colors){
                     colors[i] = `rgb(${colors[i][0]},${colors[i][1]},${colors[i][2]})`;
                 }
                 this.defaultColors = colors;
+                
             };
        },
        process(){
@@ -113,6 +121,12 @@ app.ui = new Vue({
 
        colorPanelClose(){
             this.pixel.getColorNone();//取消选择
+       },
+
+       applyColor(){
+           var color = this.pickedColor;
+           //改变选中区域的颜色
+           this.pixel.changeSelectedColor([color.rgba.r ,color.rgba.g ,color.rgba.b], this.runtime.HOnly);
        }
     },
     mounted() {
@@ -137,6 +151,12 @@ app.ui = new Vue({
         },{ passive: false });
 
 
+        //加减号缩放
+        hotkeys('c,space',  (e, handler)=>{
+            this.applyColor();
+          });
+
+
         //this.pixel = new Pixel("./img/eg.jpg" ,this.settings); //
         this.pixel = new Pixel(this.settings); //
         this.pixel.onSelect = ()=>{
@@ -145,8 +165,7 @@ app.ui = new Vue({
     },
     watch: {
         pickedColor:function(newVal){
-            //改变选中区域的颜色
-            this.pixel.changeSelectedColor([newVal.rgba.r ,newVal.rgba.g ,newVal.rgba.b], this.runtime.HOnly);
+            this.applyColor();
             //记录使用过的颜色
             this.recordColor(`rgb(${newVal.rgba.r},${newVal.rgba.g},${newVal.rgba.b})`);
         },
